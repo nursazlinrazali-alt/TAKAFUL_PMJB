@@ -1,0 +1,14 @@
+/* ============================================================
+   Gaya Cetak — Dashboard Takaful Pelajar PMJB
+   ============================================================ */
+@media print {
+  .sidebar, .header, .bar-carian, .btn, .modal-latar,
+  .nav-item, .halaman-tajuk .btn { display: none !important; }
+  .kandungan { margin-left: 0 !important; margin-top: 0 !important; padding: 0 !important; }
+  body { background: white; font-size: 12px; }
+  .panel { border: 1px solid #ccc; page-break-inside: avoid; }
+  .jadual th, .jadual td { padding: 6px 10px; font-size: 11px; }
+  h1 { font-size: 16px; }
+  .grid-kad { grid-template-columns: repeat(3, 1fr); }
+  .grid-carta { grid-template-columns: 1fr 1fr; }
+}
