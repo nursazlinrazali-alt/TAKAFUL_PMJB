@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard Takaful Pelajar PMJB</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/print.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+
+<!-- ===== HEADER ===== -->
+<header class="header">
+  <div class="header-kiri">
+    <button id="btn-toggle-sidebar" class="btn btn-biasa btn-kecil" style="display:none;background:transparent;border:none;color:#fff;font-size:20px" onclick="document.querySelector('.sidebar').classList.toggle('buka')">☰</button>
+    <div class="header-logo">T</div>
+    <div>
+      <div class="header-tajuk">Dashboard Takaful Pelajar</div>
+      <div class="header-subjudul">Politeknik Muar Johor Bahru (PMJB)</div>
+    </div>
+  </div>
+  <div class="header-kanan">
+    <span class="semester-badge">Memuatkan...</span>
+    <button class="btn btn-biasa btn-kecil" onclick="buka_import_json()" title="Import JSON">📥 Import</button>
+    <button class="btn btn-biasa btn-kecil" onclick="eksport_json()" title="Eksport JSON">📤 Eksport</button>
+    <button class="btn btn-biasa btn-kecil" onclick="window.print()" title="Cetak">🖨 Cetak</button>
+  </div>
+</header>
+
+<!-- ===== SIDEBAR ===== -->
+<nav class="sidebar">
+  <div class="sidebar-bahagian">
+    <div class="sidebar-label">Menu Utama</div>
+    <a class="nav-item" data-halaman="dashboard" onclick="navigasi('dashboard')">
+      <span class="nav-ikon">📊</span> Dashboard
+    </a>
+    <a class="nav-item" data-halaman="pelajar" onclick="navigasi('pelajar')">
+      <span class="nav-ikon">👨‍🎓</span> Senarai Pelajar
+    </a>
+    <a class="nav-item" data-halaman="pembayaran" onclick="navigasi('pembayaran')">
+      <span class="nav-ikon">💳</span> Pembayaran Takaful
+      <span class="nav-lencana" id="lencana-tunggu" style="display:none">0</span>
+    </a>
+    <a class="nav-item" data-halaman="perhatian" onclick="navigasi('perhatian')">
+      <span class="nav-ikon">⚠️</span> Perlu Perhatian
+      <span class="nav-lencana" id="lencana-perhatian" style="display:none">0</span>
+    </a>
+  </div>
+  <div class="sidebar-bahagian">
+    <div class="sidebar-label">Pengurusan</div>
+    <a class="nav-item" data-halaman="semester" onclick="navigasi('semester')">
+      <span class="nav-ikon">🗓️</span> Semester
+    </a>
+  </div>
+  <div class="sidebar-bahagian" style="margin-top:auto;padding:12px 16px;border-top:1px solid var(--sempadan)">
+    <p style="font-size:11px;color:var(--kelabu)">Data disimpan dalam browser ini.</p>
+    <button class="btn btn-biasa btn-kecil" style="margin-top:8px;width:100%" onclick="eksport_csv()">📋 Eksport CSV</button>
+    <button class="btn btn-biasa btn-kecil" style="margin-top:6px;width:100%" onclick="buka_import_csv_bayaran()">📥 Import CSV Bayaran</button>
+  </div>
+</nav>
+
+<!-- ===== KANDUNGAN UTAMA ===== -->
+<main class="kandungan">
+
+  <!-- ===== HALAMAN: DASHBOARD ===== -->
+  <section id="halaman-dashboard" class="halaman">
+    <div class="halaman-tajuk">
+      <div>
+        <h1>📊 Dashboard</h1>
+        <p id="info-semester">Memuatkan maklumat semester...</p>
+      </div>
+      <button class="btn btn-biasa" onclick="window.print()">🖨 Jana Laporan PDF</button>
+    </div>
+
+    <!-- Kad Statistik -->
+    <div class="grid-kad">
+      <div class="kad">
+        <div class="kad-ikon">👨‍🎓</div>
+        <div class="kad-nilai" id="kad-jumlah">—</div>
+        <div class="kad-label">Jumlah Pelajar</div>
+      </div>
+      <div class="kad hijau">
+        <div class="kad-ikon">✅</div>
+        <div class="kad-nilai" id="kad-bayar">—</div>
+        <div class="kad-label">Sudah Bayar</div>
+      </div>
+      <div class="kad merah">
+        <div class="kad-ikon">❌</div>
+        <div class="kad-nilai" id="kad-belum">—</div>
+        <div class="kad-label">Belum / Tunggu Bayar</div>
+      </div>
+      <div class="kad oren">
+        <div class="kad-ikon">⏳</div>
+        <div class="kad-nilai" id="kad-tunggu">—</div>
+        <div class="kad-label">Tunggu Pengesahan</div>
+      </div>
+      <div class="kad oren">
+        <div class="kad-ikon">⚠️</div>
+        <div class="kad-nilai" id="kad-bermasalah">—</div>
+        <div class="kad-label">Pelajar Tercicir</div>
+      </div>
+      <div class="kad ungu">
+        <div class="kad-ikon">🔄</div>
+        <div class="kad-nilai" id="kad-repeat">—</div>
+        <div class="kad-label">Pelajar Repeat</div>
+      </div>
+    </div>
+
+    <!-- Carta -->
+    <div class="grid-carta">
+      <div class="panel">
+        <div class="panel-kepala"><h2>Status Takaful</h2></div>
+        <div class="panel-badan">
+          <div class="carta-balut"><canvas id="carta-takaful"></canvas></div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-kepala"><h2>Status Pengajian</h2></div>
+        <div class="panel-badan">
+          <div class="carta-balut"><canvas id="carta-pengajian"></canvas></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Perlu Perhatian Segera -->
+    <div class="panel">
+      <div class="panel-kepala">
+        <h2>⚠️ Perlu Perhatian Segera</h2>
+        <button class="btn btn-amaran btn-kecil" onclick="navigasi('perhatian')">Lihat Semua →</button>
+      </div>
+      <div class="panel-badan" id="senarai-perhatian-dash"></div>
+    </div>
+  </section>
+
+  <!-- ===== HALAMAN: PELAJAR ===== -->
+  <section id="halaman-pelajar" class="halaman">
+    <div class="halaman-tajuk">
+      <div>
+        <h1>👨‍🎓 Senarai Pelajar</h1>
+        <p>Urus rekod pelajar — <span id="bil-dipapar">0</span> dipapar daripada <span id="bil-jumlah">0</span> pelajar</p>
+      </div>
+      <button class="btn btn-utama" onclick="buka_tambah_pelajar()">+ Tambah Pelajar</button>
+    </div>
+
+    <!-- Carian & Penapis -->
+    <div class="bar-carian">
+      <input type="text" id="carian-pelajar" class="input-carian" placeholder="🔍  Cari nama, no. matrik, atau PA...">
+      <select id="penapis-pengajian" class="pilih-penapis">
+        <option value="">Semua Status Pengajian</option>
+        <option value="aktif">Aktif</option>
+        <option value="repeat">Repeat</option>
+        <option value="extend">Extend</option>
+        <option value="junior">Junior</option>
+        <option value="tangguh">Tangguh</option>
+      </select>
+      <select id="penapis-takaful" class="pilih-penapis">
+        <option value="">Semua Status Takaful</option>
+        <option value="bayar">Sudah Bayar</option>
+        <option value="belum_bayar">Belum Bayar</option>
+        <option value="tunggu">Tunggu Pengesahan</option>
+        <option value="pengecualian">Pengecualian</option>
+      </select>
+      <select id="penapis-program" class="pilih-penapis">
+        <option value="">Semua Program</option>
+        <option value="DKM">DKM</option>
+        <option value="DIT">DIT</option>
+        <option value="DAT">DAT</option>
+      </select>
+    </div>
+
+    <!-- Jadual Pelajar -->
+    <div class="panel">
+      <div class="jadual-balut">
+        <table class="jadual">
+          <thead>
+            <tr>
+              <th>No. Matrik</th>
+              <th>Nama Pelajar</th>
+              <th>Program</th>
+              <th>Kelas Semasa</th>
+              <th>Status Pengajian</th>
+              <th>Status Takaful</th>
+              <th>Penasihat Akademik</th>
+              <th>Tindakan</th>
+            </tr>
+          </thead>
+          <tbody id="jadual-pelajar-badan">
+            <tr><td colspan="8"><div class="tiada-data"><div class="tiada-data-ikon">⏳</div><p>Memuatkan data...</p></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== HALAMAN: PEMBAYARAN ===== -->
+  <section id="halaman-pembayaran" class="halaman">
+    <div class="halaman-tajuk">
+      <div>
+        <h1>💳 Pembayaran Takaful</h1>
+        <p>Urus rekod bayaran dan pengesahan resit pelajar</p>
+      </div>
+      <button class="btn btn-biasa" onclick="eksport_belum_bayar_csv()">📋 Eksport Belum Bayar</button>
+    </div>
+
+    <!-- Menunggu Pengesahan -->
+    <div class="panel">
+      <div class="panel-kepala">
+        <h2>⏳ Menunggu Pengesahan Resit (<span id="bil-tunggu-sahkan">0</span>)</h2>
+      </div>
+      <div class="panel-badan" id="senarai-tunggu-sahkan"></div>
+    </div>
+
+    <!-- Belum Bayar -->
+    <div class="panel">
+      <div class="panel-kepala">
+        <h2>❌ Belum Bayar (<span id="bil-belum-bayar-pay">0</span>)</h2>
+      </div>
+      <div class="panel-badan" id="senarai-belum-bayar-pay"></div>
+    </div>
+  </section>
+
+  <!-- ===== HALAMAN: PERHATIAN ===== -->
+  <section id="halaman-perhatian" class="halaman">
+    <div class="halaman-tajuk">
+      <div>
+        <h1>⚠️ Pelajar Perlu Perhatian</h1>
+        <p>Senarai pelajar mengikut kategori yang memerlukan tindakan</p>
+      </div>
+      <button class="btn btn-biasa" onclick="eksport_belum_bayar_csv()">📋 Eksport Belum Bayar</button>
+    </div>
+
+    <!-- Belum Bayar -->
+    <div class="panel">
+      <div class="panel-kepala" style="cursor:pointer" onclick="togol_seksyen('perhatian-belum-wrap')">
+        <h2><span style="color:var(--merah)">❌</span> Belum Bayar Takaful (<span id="bil-perhatian-belum">0</span>)</h2>
+        <span style="color:var(--kelabu)">▼</span>
+      </div>
+      <div id="perhatian-belum-wrap" class="panel-badan">
+        <div id="perhatian-belum"></div>
+      </div>
+    </div>
+
+    <!-- Repeat -->
+    <div class="panel">
+      <div class="panel-kepala" style="cursor:pointer" onclick="togol_seksyen('perhatian-repeat-wrap')">
+        <h2><span style="color:var(--oren)">⚠</span> Pelajar Repeat (<span id="bil-perhatian-repeat">0</span>)</h2>
+        <span style="color:var(--kelabu)">▼</span>
+      </div>
+      <div id="perhatian-repeat-wrap" class="panel-badan">
+        <div id="perhatian-repeat"></div>
+      </div>
+    </div>
+
+    <!-- Extend -->
+    <div class="panel">
+      <div class="panel-kepala" style="cursor:pointer" onclick="togol_seksyen('perhatian-extend-wrap')">
+        <h2><span style="color:var(--biru-cerah)">↗</span> Pelajar Extend (<span id="bil-perhatian-extend">0</span>)</h2>
+        <span style="color:var(--kelabu)">▼</span>
+      </div>
+      <div id="perhatian-extend-wrap" class="panel-badan">
+        <div id="perhatian-extend"></div>
+      </div>
+    </div>
+
+    <!-- Junior -->
+    <div class="panel">
+      <div class="panel-kepala" style="cursor:pointer" onclick="togol_seksyen('perhatian-junior-wrap')">
+        <h2><span style="color:var(--ungu)">↓</span> Masuk Kelas Junior (<span id="bil-perhatian-junior">0</span>)</h2>
+        <span style="color:var(--kelabu)">▼</span>
+      </div>
+      <div id="perhatian-junior-wrap" class="panel-badan">
+        <div id="perhatian-junior"></div>
+      </div>
+    </div>
+
+    <!-- Tangguh -->
+    <div class="panel">
+      <div class="panel-kepala" style="cursor:pointer" onclick="togol_seksyen('perhatian-tangguh-wrap')">
+        <h2><span style="color:var(--kelabu-gelap)">⏸</span> Pelajar Tangguh (<span id="bil-perhatian-tangguh">0</span>)</h2>
+        <span style="color:var(--kelabu)">▼</span>
+      </div>
+      <div id="perhatian-tangguh-wrap" class="panel-badan">
+        <div id="perhatian-tangguh"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== HALAMAN: SEMESTER ===== -->
+  <section id="halaman-semester" class="halaman">
+    <div class="halaman-tajuk">
+      <div>
+        <h1>🗓️ Pengurusan Semester</h1>
+        <p>Mulakan semester baru dan semak log aktiviti sistem</p>
+      </div>
+    </div>
+
+    <!-- Info Semester Semasa -->
+    <div class="panel" style="margin-bottom:20px">
+      <div class="panel-kepala"><h2>📌 Semester Semasa</h2></div>
+      <div class="panel-badan" style="display:flex;gap:40px;flex-wrap:wrap">
+        <div>
+          <div style="font-size:11px;color:var(--kelabu-gelap);font-weight:600;text-transform:uppercase">Nama Semester</div>
+          <div style="font-size:20px;font-weight:700;color:var(--biru-gelap);margin-top:4px" id="sem-nama-semasa">—</div>
+        </div>
+        <div>
+          <div style="font-size:11px;color:var(--kelabu-gelap);font-weight:600;text-transform:uppercase">Tarikh Mula</div>
+          <div style="font-size:20px;font-weight:700;color:var(--biru-gelap);margin-top:4px" id="sem-tarikh-mula">—</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Wizard Semester Baru -->
+    <div class="panel">
+      <div class="panel-kepala"><h2>🚀 Mulakan Semester Baru</h2></div>
+      <div class="panel-badan">
+
+        <div class="kotak-amaran kuning">
+          <span class="kotak-amaran-ikon">⚠️</span>
+          <div><strong>Perhatian:</strong> Tindakan ini akan menaikkan kelas semua pelajar <strong>Aktif</strong> secara automatik, dan menetapkan semula status takaful SEMUA pelajar kepada <strong>Belum Bayar</strong>. Pelajar Repeat/Extend/Junior/Tangguh perlu disemak secara manual selepas proses.</div>
+        </div>
+
+        <!-- Wizard langkah -->
+        <div class="wizard-langkah">
+          <div class="wizard-item aktif">
+            <span class="wizard-nombor">1</span>
+            Nama Semester
+          </div>
+          <div class="wizard-item">
+            <span class="wizard-nombor">2</span>
+            Semak Preview
+          </div>
+          <div class="wizard-item">
+            <span class="wizard-nombor">3</span>
+            Selesai
+          </div>
+        </div>
+
+        <!-- Panel Langkah 1 -->
+        <div class="wizard-panel aktif">
+          <div class="kumpulan-borang">
+            <label>Nama Semester Baru</label>
+            <input type="text" id="inp-nama-semester-baru" class="kawalan-borang"
+                   placeholder="cth: Sem 5 2025/2026" style="max-width:320px">
+          </div>
+          <button class="btn btn-utama" onclick="wizard_semak_preview()">Seterusnya →</button>
+        </div>
+
+        <!-- Panel Langkah 2 -->
+        <div class="wizard-panel">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+            <div class="kad hijau">
+              <div class="kad-ikon">⬆️</div>
+              <div class="kad-nilai" id="preview-bil-aktif">—</div>
+              <div class="kad-label">Pelajar Naik Kelas (Auto)</div>
+            </div>
+            <div class="kad oren">
+              <div class="kad-ikon">✋</div>
+              <div class="kad-nilai" id="preview-bil-manual">—</div>
+              <div class="kad-label">Perlu Semakan Manual</div>
+            </div>
+          </div>
+
+          <div class="panel" style="margin-bottom:16px">
+            <div class="panel-kepala"><h2>✅ Akan Dinaikkan Kelas Automatik</h2></div>
+            <div class="panel-badan" id="preview-naik-auto"></div>
+          </div>
+
+          <div id="preview-semak-manual" style="margin-bottom:16px"></div>
+
+          <div style="display:flex;gap:10px">
+            <button class="btn btn-biasa" onclick="wizard_semula()">← Kembali</button>
+            <button class="btn btn-bahaya" onclick="wizard_proses_semester()">✅ Sahkan &amp; Mulakan Semester <strong id="preview-nama-semester"></strong></button>
+          </div>
+        </div>
+
+        <!-- Panel Langkah 3 — Selesai -->
+        <div class="wizard-panel">
+          <div class="kotak-amaran hijau">
+            <span class="kotak-amaran-ikon">🎉</span>
+            <div>
+              <strong>Semester baru berjaya dimulakan!</strong><br>
+              Semester <strong id="selesai-nama-semester"></strong> telah diaktifkan.
+              <strong id="selesai-bil-naik"></strong> pelajar telah dinaikkan kelas.
+              Status takaful semua pelajar telah ditetapkan semula kepada <strong>Belum Bayar</strong>.
+            </div>
+          </div>
+          <div style="display:flex;gap:10px;margin-top:16px">
+            <button class="btn btn-utama" onclick="navigasi('perhatian')">⚠️ Semak Pelajar Tercicir</button>
+            <button class="btn btn-biasa" onclick="wizard_semula()">Mulakan Lagi</button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Log Aktiviti -->
+    <div class="panel">
+      <div class="panel-kepala"><h2>📋 Log Aktiviti Sistem</h2></div>
+      <div class="panel-badan" id="log-aktiviti"></div>
+    </div>
+  </section>
+
+</main>
+
+<!-- ===== MODAL BORANG PELAJAR ===== -->
+<div id="modal-borang-pelajar" class="modal-latar">
+  <div class="modal-kotak">
+    <div class="modal-kepala">
+      <h3 class="modal-tajuk-teks">Pelajar</h3>
+      <button class="modal-tutup" onclick="tutup_modal('modal-borang-pelajar')">✕</button>
+    </div>
+    <div class="modal-badan">
+      <div class="grid-borang-2">
+        <div class="kumpulan-borang">
+          <label>No. Matrik *</label>
+          <input type="text" id="f-id" class="kawalan-borang" placeholder="cth: 22DKM01234">
+        </div>
+        <div class="kumpulan-borang">
+          <label>No. IC</label>
+          <input type="text" id="f-no-ic" class="kawalan-borang" placeholder="cth: 040101-14-5678">
+        </div>
+      </div>
+      <div class="kumpulan-borang">
+        <label>Nama Penuh *</label>
+        <input type="text" id="f-nama" class="kawalan-borang" placeholder="Nama penuh pelajar">
+      </div>
+      <div class="grid-borang-3">
+        <div class="kumpulan-borang">
+          <label>Program</label>
+          <input type="text" id="f-program" class="kawalan-borang" placeholder="cth: DKM">
+        </div>
+        <div class="kumpulan-borang">
+          <label>Semester Masuk</label>
+          <input type="text" id="f-sem-masuk" class="kawalan-borang" placeholder="cth: Sem 1 2023/2024">
+        </div>
+        <div class="kumpulan-borang">
+          <label>Penasihat Akademik (PA)</label>
+          <input type="text" id="f-nama-pa" class="kawalan-borang" placeholder="Nama PA">
+        </div>
+      </div>
+      <div class="grid-borang-2">
+        <div class="kumpulan-borang">
+          <label>Kelas Semasa</label>
+          <input type="text" id="f-kelas-semasa" class="kawalan-borang" placeholder="cth: DKM2A">
+        </div>
+        <div class="kumpulan-borang">
+          <label>Semester Semasa</label>
+          <input type="text" id="f-sem-semasa" class="kawalan-borang" placeholder="cth: Sem 3 2024/2025">
+        </div>
+      </div>
+      <div class="grid-borang-2">
+        <div class="kumpulan-borang">
+          <label>Status Pengajian</label>
+          <select id="f-status-pengajian" class="kawalan-borang" onchange="togol_medan_tercicir()">
+            <option value="aktif">Aktif</option>
+            <option value="repeat">Repeat</option>
+            <option value="extend">Extend</option>
+            <option value="junior">Junior</option>
+            <option value="tangguh">Tangguh</option>
+          </select>
+        </div>
+        <div class="kumpulan-borang">
+          <label>Status Takaful</label>
+          <select id="f-status-takaful" class="kawalan-borang">
+            <option value="belum_bayar">Belum Bayar</option>
+            <option value="bayar">Sudah Bayar</option>
+            <option value="tunggu">Tunggu Pengesahan</option>
+            <option value="pengecualian">Pengecualian</option>
+          </select>
+        </div>
+      </div>
+      <!-- Kelas & Semester Asal (untuk pelajar tercicir sahaja) -->
+      <div id="bahagian-kelas-asal" class="grid-borang-2" style="display:none">
+        <div class="kumpulan-borang">
+          <label>Kelas Sepatutnya (Asal)</label>
+          <input type="text" id="f-kelas-asal" class="kawalan-borang" placeholder="Kelas jika tiada masalah">
+        </div>
+        <div class="kumpulan-borang">
+          <label>Semester Sepatutnya (Asal)</label>
+          <input type="text" id="f-sem-asal" class="kawalan-borang" placeholder="Semester jika tiada masalah">
+        </div>
+      </div>
+      <div class="kumpulan-borang">
+        <label>Sebab Status (jika berkaitan)</label>
+        <input type="text" id="f-sebab-status" class="kawalan-borang" placeholder="cth: Gagal subjek Matematik">
+      </div>
+      <div class="kumpulan-borang">
+        <label>Catatan</label>
+        <textarea id="f-catatan" class="kawalan-borang" placeholder="Catatan tambahan..."></textarea>
+      </div>
+    </div>
+    <div class="modal-kaki">
+      <button class="btn btn-utama" onclick="simpan_borang_pelajar()">💾 Simpan</button>
+      <button class="btn btn-biasa" onclick="tutup_modal('modal-borang-pelajar')">Batal</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL BAYARAN ===== -->
+<div id="modal-bayaran" class="modal-latar">
+  <div class="modal-kotak">
+    <div class="modal-kepala">
+      <h3 class="modal-tajuk-teks">Rekod Bayaran</h3>
+      <button class="modal-tutup" onclick="tutup_modal('modal-bayaran')">✕</button>
+    </div>
+    <div class="modal-badan"></div>
+    <div class="modal-kaki"></div>
+  </div>
+</div>
+
+<!-- ===== MODAL PROFIL ===== -->
+<div id="modal-profil" class="modal-latar">
+  <div class="modal-kotak">
+    <div class="modal-kepala">
+      <h3 class="modal-tajuk-teks">Profil Pelajar</h3>
+      <button class="modal-tutup" onclick="tutup_modal('modal-profil')">✕</button>
+    </div>
+    <div class="modal-badan"></div>
+    <div class="modal-kaki"></div>
+  </div>
+</div>
+
+<!-- ===== MODAL PREVIEW RESIT ===== -->
+<div id="modal-preview-resit" class="modal-latar">
+  <div class="modal-kotak">
+    <div class="modal-kepala">
+      <h3 class="modal-tajuk-teks">Resit Bayaran</h3>
+      <button class="modal-tutup" onclick="tutup_modal('modal-preview-resit')">✕</button>
+    </div>
+    <div class="modal-badan"></div>
+    <div class="modal-kaki"></div>
+  </div>
+</div>
+
+<!-- ===== SKRIP ===== -->
+<script src="js/dataManager.js"></script>
+<script src="js/dashboard.js"></script>
+<script src="js/studentList.js"></script>
+<script src="js/payment.js"></script>
+<script src="js/atRisk.js"></script>
+<script src="js/semesterManager.js"></script>
+<script>
+  // Fungsi togol seksyen (accordion)
+  function togol_seksyen(id) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.style.display = (el.style.display === 'none') ? 'block' : 'none';
+  }
+  // Responsif sidebar toggle
+  function semak_saiz() {
+    const btn = document.getElementById('btn-toggle-sidebar');
+    if (btn) btn.style.display = window.innerWidth < 900 ? 'block' : 'none';
+  }
+  window.addEventListener('resize', semak_saiz);
+  semak_saiz();
+</script>
+<script src="js/app.js"></script>
+
+</body>
+</html>
